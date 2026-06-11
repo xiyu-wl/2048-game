@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.3s ease;
+        }
+        body.theme-ocean {
+            background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+        }
+        body.theme-sunset {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        body.theme-forest {
+            background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);
+        }
+        body.theme-dark {
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+        }
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .game-container {
+            background: #bbada0;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transition: background 0.3s ease;
+        }
+        .game-container.theme-ocean {
+            background: #2a5a6e;
+        }
+        .game-container.theme-sunset {
+            background: #8b4a5e;
+        }
+        .game-container.theme-forest {
+            background: #2d5a4a;
+        }
+        .game-container.theme-dark {
+            background: #3a3a3a;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            width: 350px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .title {
+            font-size: 48px;
+            font-weight: bold;
+            color: #776e65;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        body.theme-dark .title {
+            color: #e0e0e0;
+        }
+        .score-container {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .score-box {
+            background: #bbada0;
+            border-radius: 6px;
+            padding: 6px 12px;
+            text-align: center;
+            min-width: 65px;
+            transition: background 0.3s ease;
+        }
+        .game-container.theme-ocean .score-box {
+            background: #1e4a5c;
+        }
+        .game-container.theme-sunset .score-box {
+            background: #7a3a4e;
+        }
+        .game-container.theme-forest .score-box {
+            background: #1d4a3a;
+        }
+        .game-container.theme-dark .score-box {
+            background: #4a4a4a;
+        }
+        .score-label {
+            font-size: 10px;
+            color: #eee4da;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .score-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+        }
+        .controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #8f7a66;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        button:hover {
+            background: #9f8b77;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-pause {
+            background: #e74c3c;
+        }
+        .btn-pause:hover {
+            background: #c0392b;
+        }
+        .btn-resume {
+            background: #27ae60;
+        }
+        .btn-resume:hover {
+            background: #1e8449;
+        }
+        .btn-sound {
+            background: #3498db;
+        }
+        .btn-sound:hover {
+            background: #2980b9;
+        }
+        .btn-sound.muted {
+            background: #95a5a6;
+        }
+        .difficulty-selector {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .difficulty-btn {
+            padding: 5px 12px;
+            font-size: 12px;
+        }
+        .difficulty-btn.active {
+            background: #e67e22;
+        }
+        .theme-selector {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .theme-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            padding: 0;
+        }
+        .theme-btn.classic {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .theme-btn.ocean {
+            background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+        }
+        .theme-btn.sunset {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .theme-btn.forest {
+            background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);
+        }
+        .theme-btn.dark {
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+        }
+        .theme-btn.active {
+            box-shadow: 0 0 0 3px white;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            background: #bbada0;
+            padding: 10px;
+            border-radius: 6px;
+            transition: background 0.3s ease;
+        }
+        .game-container.theme-ocean .grid {
+            background: #1e4a5c;
+        }
+        .game-container.theme-sunset .grid {
+            background: #7a3a4e;
+        }
+        .game-container.theme-forest .grid {
+            background: #1d4a3a;
+        }
+        .game-container.theme-dark .grid {
+            background: #4a4a4a;
+        }
+        .cell {
+            width: 75px;
+            height: 75px;
+            background: #cdc1b4;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+        .game-container.theme-ocean .cell {
+            background: #3a7a9e;
+        }
+        .game-container.theme-sunset .cell {
+            background: #9a5a6e;
+        }
+        .game-container.theme-forest .cell {
+            background: #3d7a6a;
+        }
+        .game-container.theme-dark .cell {
+            background: #5a5a5a;
+        }
+        .cell.tile {
+            animation: appear 0.2s ease;
+        }
+        @keyframes appear {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .cell.tile-2 { background: #eee4da; color: #776e65; }
+        .cell.tile-4 { background: #ede0c8; color: #776e65; }
+        .cell.tile-8 { background: #f2b179; color: #f9f6f2; }
+        .cell.tile-16 { background: #f59563; color: #f9f6f2; }
+        .cell.tile-32 { background: #f67c5f; color: #f9f6f2; }
+        .cell.tile-64 { background: #f65e3b; color: #f9f6f2; }
+        .cell.tile-128 { background: #edcf72; color: #f9f6f2; }
+        .cell.tile-256 { background: #edcc61; color: #f9f6f2; }
+        .cell.tile-512 { background: #edc850; color: #f9f6f2; }
+        .cell.tile-1024 { background: #edc53f; color: #f9f6f2; font-size: 24px; }
+        .cell.tile-2048 { background: #edc22e; color: #f9f6f2; font-size: 24px; }
+        .cell.tile-super { background: #3c3a32; color: #f9f6f2; font-size: 20px; }
+        .game-container.theme-ocean .cell.tile-2 { background: #b8e6f5; color: #2d5a6e; }
+        .game-container.theme-ocean .cell.tile-4 { background: #87d0e6; color: #2d5a6e; }
+        .game-container.theme-ocean .cell.tile-8 { background: #5bc8dc; color: white; }
+        .game-container.theme-ocean .cell.tile-16 { background: #3db8cd; color: white; }
+        .game-container.theme-ocean .cell.tile-32 { background: #2da8bd; color: white; }
+        .game-container.theme-ocean .cell.tile-64 { background: #1f98ad; color: white; }
+        .game-container.theme-ocean .cell.tile-128 { background: #ffd93d; color: #2d5a6e; }
+        .game-container.theme-ocean .cell.tile-256 { background: #ffc107; color: #2d5a6e; }
+        .game-container.theme-ocean .cell.tile-512 { background: #ff9800; color: white; }
+        .game-container.theme-ocean .cell.tile-1024 { background: #ff5722; color: white; font-size: 24px; }
+        .game-container.theme-ocean .cell.tile-2048 { background: #f44336; color: white; font-size: 24px; }
+        .game-container.theme-ocean .cell.tile-super { background: #795548; color: white; font-size: 20px; }
+        .cell.merged {
+            animation: merge 0.2s ease;
+        }
+        @keyframes merge {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .instructions {
+            margin-top: 20px;
+            text-align: center;
+            color: #eee4da;
+            font-size: 14px;
+        }
+        body.theme-dark .instructions {
+            color: #b0b0b0;
+        }
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #f9f6f2;
+        }
+        body.theme-dark .instructions h3 {
+            color: #e0e0e0;
+        }
+        .instructions p {
+            margin: 5px 0;
+        }
+        .game-over-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .game-over-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .game-over-modal {
+            background: #faf8ef;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            max-width: 320px;
+        }
+        body.theme-dark .game-over-modal {
+            background: #444;
+        }
+        .game-over-overlay.show .game-over-modal {
+            transform: scale(1);
+        }
+        .game-over-modal h2 {
+            font-size: 36px;
+            color: #776e65;
+            margin-bottom: 10px;
+        }
+        body.theme-dark .game-over-modal h2 {
+            color: #e0e0e0;
+        }
+        .game-over-modal p {
+            font-size: 18px;
+            color: #776e65;
+            margin-bottom: 15px;
+        }
+        body.theme-dark .game-over-modal p {
+            color: #b0b0b0;
+        }
+        .final-score {
+            font-size: 28px;
+            font-weight: bold;
+            color: #f77a52;
+        }
+        .final-stats {
+            font-size: 14px;
+            margin-bottom: 20px;
+            color: #776e65;
+        }
+        body.theme-dark .final-stats {
+            color: #b0b0b0;
+        }
+        .leaderboard-btn {
+            background: #9b59b6;
+            margin-top: 10px;
+        }
+        .leaderboard-btn:hover {
+            background: #8e44ad;
+        }
+        .pause-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .pause-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .pause-modal {
+            background: #faf8ef;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        body.theme-dark .pause-modal {
+            background: #444;
+        }
+        .pause-modal h2 {
+            font-size: 32px;
+            color: #776e65;
+            margin-bottom: 20px;
+        }
+        body.theme-dark .pause-modal h2 {
+            color: #e0e0e0;
+        }
+        .leaderboard-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .leaderboard-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .leaderboard-modal {
+            background: #faf8ef;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 340px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        body.theme-dark .leaderboard-modal {
+            background: #444;
+        }
+        .leaderboard-modal h2 {
+            font-size: 28px;
+            color: #776e65;
+            margin-bottom: 20px;
+        }
+        body.theme-dark .leaderboard-modal h2 {
+            color: #e0e0e0;
+        }
+        .leaderboard-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: #ede0c8;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        body.theme-dark .leaderboard-item {
+            background: #555;
+        }
+        .leaderboard-item:nth-child(1) {
+            background: #ffd700;
+        }
+        .leaderboard-item:nth-child(2) {
+            background: #c0c0c0;
+        }
+        .leaderboard-item:nth-child(3) {
+            background: #cd7f32;
+        }
+        .leaderboard-rank {
+            font-weight: bold;
+            font-size: 18px;
+            min-width: 30px;
+        }
+        .leaderboard-score {
+            font-weight: bold;
+            font-size: 18px;
+            color: #776e65;
+        }
+        body.theme-dark .leaderboard-score {
+            color: #e0e0e0;
+        }
+        .leaderboard-info {
+            flex: 1;
+            text-align: left;
+            padding-left: 10px;
+        }
+        .leaderboard-moves, .leaderboard-time {
+            font-size: 12px;
+            color: #8f7a66;
+        }
+        body.theme-dark .leaderboard-moves,
+        body.theme-dark .leaderboard-time {
+            color: #999;
+        }
+        .close-btn {
+            background: #95a5a6;
+        }
+        .close-btn:hover {
+            background: #7f8c8d;
+        }
+        .empty-leaderboard {
+            color: #95a5a6;
+            font-style: italic;
+        }
+        body.theme-dark .empty-leaderboard {
+            color: #777;
+        }
+        @media (max-width: 400px) {
+            .header {
+                width: 290px;
+            }
+            .title {
+                font-size: 36px;
+            }
+            .cell {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+            }
+            .grid {
+                gap: 8px;
+            }
+            .score-box {
+                min-width: 55px;
+                padding: 4px 8px;
+            }
+            .score-value {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="window.location.href='index.html'">← 返回主菜单</button>
+    
+    <div class="game-container">
+        <div class="header">
+            <div class="title">2048</div>
+            <div class="score-container">
+                <div class="score-box">
+                    <div class="score-label">分数</div>
+                    <div class="score-value" id="score">0</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-label">最高分</div>
+                    <div class="score-value" id="best">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="newGameBtn">新游戏</button>
+            <button id="pauseBtn" class="btn-pause">暂停</button>
+            <button id="soundBtn" class="btn-sound">🔊 音效</button>
+        </div>
+        <div class="difficulty-selector">
+            <button class="difficulty-btn active" data-grid="4">4×4</button>
+            <button class="difficulty-btn" data-grid="5">5×5</button>
+            <button class="difficulty-btn" data-grid="6">6×6</button>
+        </div>
+        <div class="theme-selector">
+            <button class="theme-btn classic active" data-theme="classic" title="经典"></button>
+            <button class="theme-btn ocean" data-theme="ocean" title="海洋"></button>
+            <button class="theme-btn sunset" data-theme="sunset" title="日落"></button>
+            <button class="theme-btn forest" data-theme="forest" title="森林"></button>
+            <button class="theme-btn dark" data-theme="dark" title="暗黑"></button>
+        </div>
+        <div class="grid" id="grid"></div>
+        <div class="instructions">
+            <h3>游戏说明</h3>
+            <p>使用 ↑ ↓ ← → 方向键或滑动来移动方块</p>
+            <p>相同数字的方块会合并，目标是合成 2048！</p>
+        </div>
+    </div>
+    
+    <div class="game-over-overlay" id="gameOverOverlay">
+        <div class="game-over-modal">
+            <h2 id="gameOverTitle">游戏结束</h2>
+            <p>最终得分</p>
+            <div class="final-score" id="finalScore">0</div>
+            <div class="final-stats" id="finalStats">
+                <p>移动次数: <span id="finalMoves">0</span></p>
+                <p>用时: <span id="finalTime">0:00</span></p>
+            </div>
+            <button id="retryBtn">再来一局</button>
+            <button id="leaderboardBtn" class="leaderboard-btn">排行榜</button>
+            <button id="closeGameOverBtn" class="close-btn">关闭</button>
+        </div>
+    </div>
+    
+    <div class="pause-overlay" id="pauseOverlay">
+        <div class="pause-modal">
+            <h2>游戏暂停</h2>
+            <button id="resumeBtn" class="btn-resume">继续游戏</button>
+            <button id="restartPauseBtn">重新开始</button>
+            <button id="closePauseBtn" class="close-btn">关闭</button>
+        </div>
+    </div>
+    
+    <div class="leaderboard-overlay" id="leaderboardOverlay">
+        <div class="leaderboard-modal">
+            <h2>排行榜</h2>
+            <ul class="leaderboard-list" id="leaderboardList">
+                <li class="empty-leaderboard">暂无记录</li>
+            </ul>
+            <button id="closeLeaderboardBtn" class="close-btn">关闭</button>
+        </div>
+    </div>
+
+    <script>
+        class Game2048 {
+            constructor() {
+                this.gridSize = 4;
+                this.grid = [];
+                this.score = 0;
+                this.best = parseInt(localStorage.getItem('best2048') || '0');
+                this.isGameOver = false;
+                this.isPaused = false;
+                this.moveCount = 0;
+                this.startTime = null;
+                this.soundEnabled = true;
+                this.currentTheme = 'classic';
+                
+                this.initDOM();
+                this.init();
+                this.setupEventListeners();
+                this.loadBestScore();
+            }
+            
+            initDOM() {
+                this.gridElement = document.getElementById('grid');
+                this.scoreElement = document.getElementById('score');
+                this.bestElement = document.getElementById('best');
+                this.gameOverOverlay = document.getElementById('gameOverOverlay');
+                this.pauseOverlay = document.getElementById('pauseOverlay');
+                this.leaderboardOverlay = document.getElementById('leaderboardOverlay');
+                this.gameOverTitle = document.getElementById('gameOverTitle');
+                this.finalScore = document.getElementById('finalScore');
+                this.finalMoves = document.getElementById('finalMoves');
+                this.finalTime = document.getElementById('finalTime');
+            }
+            
+            init() {
+                this.grid = Array(this.gridSize).fill(null).map(() => Array(this.gridSize).fill(0));
+                this.score = 0;
+                this.isGameOver = false;
+                this.isPaused = false;
+                this.moveCount = 0;
+                this.startTime = Date.now();
+                
+                this.addRandomTile();
+                this.addRandomTile();
+                this.render();
+                this.updateScore();
+            }
+            
+            loadBestScore() {
+                this.bestElement.textContent = this.best;
+            }
+            
+            addRandomTile() {
+                const emptyCells = [];
+                for (let i = 0; i < this.gridSize; i++) {
+                    for (let j = 0; j < this.gridSize; j++) {
+                        if (this.grid[i][j] === 0) {
+                            emptyCells.push({i, j});
+                        }
+                    }
+                }
+                
+                if (emptyCells.length > 0) {
+                    const {i, j} = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                    this.grid[i][j] = Math.random() < 0.9 ? 2 : 4;
+                }
+            }
+            
+            render() {
+                this.gridElement.innerHTML = '';
+                this.gridElement.style.gridTemplateColumns = `repeat(${this.gridSize}, 1fr)`;
+                
+                for (let i = 0; i < this.gridSize; i++) {
+                    for (let j = 0; j < this.gridSize; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        
+                        const value = this.grid[i][j];
+                        if (value !== 0) {
+                            cell.textContent = value;
+                            cell.classList.add('tile', `tile-${value}`);
+                            
+                            if (value > 2048) {
+                                cell.classList.add('tile-super');
+                            }
+                        }
+                        
+                        this.gridElement.appendChild(cell);
+                    }
+                }
+            }
+            
+            updateScore() {
+                this.scoreElement.textContent = this.score;
+                if (this.score > this.best) {
+                    this.best = this.score;
+                    localStorage.setItem('best2048', this.best.toString());
+                    this.bestElement.textContent = this.best;
+                }
+            }
+            
+            move(direction) {
+                if (this.isGameOver || this.isPaused) return;
+                
+                const oldGrid = this.grid.map(row => [...row]);
+                
+                switch(direction) {
+                    case 'up':
+                        this.moveUp();
+                        break;
+                    case 'down':
+                        this.moveDown();
+                        break;
+                    case 'left':
+                        this.moveLeft();
+                        break;
+                    case 'right':
+                        this.moveRight();
+                        break;
+                }
+                
+                if (!this.gridsEqual(oldGrid, this.grid)) {
+                    this.moveCount++;
+                    this.addRandomTile();
+                    this.render();
+                    this.updateScore();
+                    this.playSound('move');
+                    
+                    if (this.checkGameOver()) {
+                        this.gameOver();
+                    }
+                }
+            }
+            
+            moveLeft() {
+                for (let i = 0; i < this.gridSize; i++) {
+                    let row = this.grid[i].filter(val => val !== 0);
+                    let merged = [];
+                    let score = 0;
+                    
+                    for (let j = 0; j < row.length; j++) {
+                        if (j < row.length - 1 && row[j] === row[j + 1]) {
+                            const newVal = row[j] * 2;
+                            merged.push(newVal);
+                            score += newVal;
+                            j++;
+                        } else {
+                            merged.push(row[j]);
+                        }
+                    }
+                    
+                    while (merged.length < this.gridSize) {
+                        merged.push(0);
+                    }
+                    
+                    this.grid[i] = merged;
+                    this.score += score;
+                }
+            }
+            
+            moveRight() {
+                for (let i = 0; i < this.gridSize; i++) {
+                    let row = this.grid[i].filter(val => val !== 0).reverse();
+                    let merged = [];
+                    let score = 0;
+                    
+                    for (let j = 0; j < row.length; j++) {
+                        if (j < row.length - 1 && row[j] === row[j + 1]) {
+                            const newVal = row[j] * 2;
+                            merged.push(newVal);
+                            score += newVal;
+                            j++;
+                        } else {
+                            merged.push(row[j]);
+                        }
+                    }
+                    
+                    while (merged.length < this.gridSize) {
+                        merged.push(0);
+                    }
+                    
+                    this.grid[i] = merged.reverse();
+                    this.score += score;
+                }
+            }
+            
+            moveUp() {
+                for (let j = 0; j < this.gridSize; j++) {
+                    let column = [];
+                    for (let i = 0; i < this.gridSize; i++) {
+                        if (this.grid[i][j] !== 0) {
+                            column.push(this.grid[i][j]);
+                        }
+                    }
+                    
+                    let merged = [];
+                    let score = 0;
+                    
+                    for (let i = 0; i < column.length; i++) {
+                        if (i < column.length - 1 && column[i] === column[i + 1]) {
+                            const newVal = column[i] * 2;
+                            merged.push(newVal);
+                            score += newVal;
+                            i++;
+                        } else {
+                            merged.push(column[i]);
+                        }
+                    }
+                    
+                    while (merged.length < this.gridSize) {
+                        merged.push(0);
+                    }
+                    
+                    for (let i = 0; i < this.gridSize; i++) {
+                        this.grid[i][j] = merged[i];
+                    }
+                    
+                    this.score += score;
+                }
+            }
+            
+            moveDown() {
+                for (let j = 0; j < this.gridSize; j++) {
+                    let column = [];
+                    for (let i = this.gridSize - 1; i >= 0; i--) {
+                        if (this.grid[i][j] !== 0) {
+                            column.push(this.grid[i][j]);
+                        }
+                    }
+                    
+                    let merged = [];
+                    let score = 0;
+                    
+                    for (let i = 0; i < column.length; i++) {
+                        if (i < column.length - 1 && column[i] === column[i + 1]) {
+                            const newVal = column[i] * 2;
+                            merged.push(newVal);
+                            score += newVal;
+                            i++;
+                        } else {
+                            merged.push(column[i]);
+                        }
+                    }
+                    
+                    while (merged.length < this.gridSize) {
+                        merged.push(0);
+                    }
+                    
+                    for (let i = 0; i < this.gridSize; i++) {
+                        this.grid[this.gridSize - 1 - i][j] = merged[i];
+                    }
+                    
+                    this.score += score;
+                }
+            }
+            
+            gridsEqual(grid1, grid2) {
+                for (let i = 0; i < this.gridSize; i++) {
+                    for (let j = 0; j < this.gridSize; j++) {
+                        if (grid1[i][j] !== grid2[i][j]) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            
+            checkGameOver() {
+                for (let i = 0; i < this.gridSize; i++) {
+                    for (let j = 0; j < this.gridSize; j++) {
+                        if (this.grid[i][j] === 0) {
+                            return false;
+                        }
+                        if (j < this.gridSize - 1 && this.grid[i][j] === this.grid[i][j + 1]) {
+                            return false;
+                        }
+                        if (i < this.gridSize - 1 && this.grid[i][j] === this.grid[i + 1][j]) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            
+            gameOver() {
+                this.isGameOver = true;
+                this.playSound('gameover');
+                
+                const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                
+                this.finalScore.textContent = this.score;
+                this.finalMoves.textContent = this.moveCount;
+                this.finalTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                this.saveToLeaderboard();
+                this.gameOverOverlay.classList.add('show');
+            }
+            
+            formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+            
+            saveToLeaderboard() {
+                const leaderboard = JSON.parse(localStorage.getItem('leaderboard2048') || '[]');
+                leaderboard.push({
+                    score: this.score,
+                    moves: this.moveCount,
+                    time: Math.floor((Date.now() - this.startTime) / 1000),
+                    date: new Date().toISOString()
+                });
+                
+                leaderboard.sort((a, b) => b.score - a.score);
+                const top10 = leaderboard.slice(0, 10);
+                localStorage.setItem('leaderboard2048', JSON.stringify(top10));
+            }
+            
+            showLeaderboard() {
+                const leaderboard = JSON.parse(localStorage.getItem('leaderboard2048') || '[]');
+                const listElement = document.getElementById('leaderboardList');
+                
+                if (leaderboard.length === 0) {
+                    listElement.innerHTML = '<li class="empty-leaderboard">暂无记录</li>';
+                } else {
+                    listElement.innerHTML = leaderboard.map((entry, index) => `
+                        <li class="leaderboard-item">
+                            <span class="leaderboard-rank">#${index + 1}</span>
+                            <span class="leaderboard-score">${entry.score}</span>
+                            <div class="leaderboard-info">
+                                <div class="leaderboard-moves">移动: ${entry.moves}</div>
+                                <div class="leaderboard-time">用时: ${this.formatTime(entry.time)}</div>
+                            </div>
+                        </li>
+                    `).join('');
+                }
+                
+                this.leaderboardOverlay.classList.add('show');
+            }
+            
+            playSound(type) {
+                if (!this.soundEnabled) return;
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                switch(type) {
+                    case 'move':
+                        oscillator.frequency.value = 440;
+                        gainNode.gain.value = 0.1;
+                        oscillator.start();
+                        oscillator.stop(audioContext.currentTime + 0.05);
+                        break;
+                    case 'gameover':
+                        oscillator.frequency.value = 200;
+                        gainNode.gain.value = 0.1;
+                        oscillator.start();
+                        oscillator.stop(audioContext.currentTime + 0.3);
+                        break;
+                }
+            }
+            
+            setGridSize(size) {
+                this.gridSize = size;
+                this.init();
+            }
+            
+            setTheme(theme) {
+                this.currentTheme = theme;
+                document.body.className = theme === 'classic' ? '' : `theme-${theme}`;
+                
+                const container = document.querySelector('.game-container');
+                container.className = 'game-container' + (theme === 'classic' ? '' : ` theme-${theme}`);
+                
+                document.querySelectorAll('.theme-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.theme === theme);
+                });
+            }
+            
+            togglePause() {
+                this.isPaused = !this.isPaused;
+                const pauseBtn = document.getElementById('pauseBtn');
+                
+                if (this.isPaused) {
+                    pauseBtn.textContent = '继续';
+                    pauseBtn.classList.remove('btn-pause');
+                    pauseBtn.classList.add('btn-resume');
+                    this.pauseOverlay.classList.add('show');
+                } else {
+                    pauseBtn.textContent = '暂停';
+                    pauseBtn.classList.remove('btn-resume');
+                    pauseBtn.classList.add('btn-pause');
+                    this.pauseOverlay.classList.remove('show');
+                }
+            }
+            
+            toggleSound() {
+                this.soundEnabled = !this.soundEnabled;
+                const soundBtn = document.getElementById('soundBtn');
+                soundBtn.textContent = this.soundEnabled ? '🔊 音效' : '🔇 静音';
+                soundBtn.classList.toggle('muted', !this.soundEnabled);
+            }
+            
+            setupEventListeners() {
+                document.addEventListener('keydown', (e) => {
+                    switch(e.key) {
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            this.move('up');
+                            break;
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            this.move('down');
+                            break;
+                        case 'ArrowLeft':
+                            e.preventDefault();
+                            this.move('left');
+                            break;
+                        case 'ArrowRight':
+                            e.preventDefault();
+                            this.move('right');
+                            break;
+                    }
+                });
+                
+                let touchStartX = 0;
+                let touchStartY = 0;
+                
+                document.addEventListener('touchstart', (e) => {
+                    touchStartX = e.changedTouches[0].screenX;
+                    touchStartY = e.changedTouches[0].screenY;
+                }, {passive: true});
+                
+                document.addEventListener('touchend', (e) => {
+                    const touchEndX = e.changedTouches[0].screenX;
+                    const touchEndY = e.changedTouches[0].screenY;
+                    this.handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY);
+                }, {passive: true});
+                
+                document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.setGridSize(parseInt(btn.dataset.grid));
+                    });
+                });
+                
+                document.querySelectorAll('.theme-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.setTheme(btn.dataset.theme);
+                    });
+                });
+                
+                document.getElementById('newGameBtn').addEventListener('click', () => this.init());
+                document.getElementById('pauseBtn').addEventListener('click', () => this.togglePause());
+                document.getElementById('soundBtn').addEventListener('click', () => this.toggleSound());
+                document.getElementById('retryBtn').addEventListener('click', () => {
+                    this.gameOverOverlay.classList.remove('show');
+                    this.init();
+                });
+                document.getElementById('closeGameOverBtn').addEventListener('click', () => {
+                    this.gameOverOverlay.classList.remove('show');
+                });
+                document.getElementById('resumeBtn').addEventListener('click', () => this.togglePause());
+                document.getElementById('restartPauseBtn').addEventListener('click', () => {
+                    this.pauseOverlay.classList.remove('show');
+                    this.isPaused = false;
+                    document.getElementById('pauseBtn').textContent = '暂停';
+                    document.getElementById('pauseBtn').classList.remove('btn-resume');
+                    document.getElementById('pauseBtn').classList.add('btn-pause');
+                    this.init();
+                });
+                document.getElementById('closePauseBtn').addEventListener('click', () => this.togglePause());
+                document.getElementById('leaderboardBtn').addEventListener('click', () => this.showLeaderboard());
+                document.getElementById('closeLeaderboardBtn').addEventListener('click', () => {
+                    this.leaderboardOverlay.classList.remove('show');
+                });
+            }
+            
+            handleSwipe(startX, startY, endX, endY) {
+                const diffX = endX - startX;
+                const diffY = endY - startY;
+                const minSwipeDistance = 50;
+                
+                if (Math.abs(diffX) < minSwipeDistance && Math.abs(diffY) < minSwipeDistance) {
+                    return;
+                }
+                
+                if (Math.abs(diffX) > Math.abs(diffY)) {
+                    this.move(diffX > 0 ? 'right' : 'left');
+                } else {
+                    this.move(diffY > 0 ? 'down' : 'up');
+                }
+            }
+        }
+        
+        const game = new Game2048();
+    </script>
+</body>
+</html>
